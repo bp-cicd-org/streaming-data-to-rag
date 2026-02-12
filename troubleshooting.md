@@ -4,7 +4,7 @@
 
 The most common error is an incorrect HTTP Endpoint. Go to `Settings -> HTTP Endpoint` and ensure it is set to "Context-Aware RAG — Non-Streaming (Experimental)":
 
-<img src="docs/settings.jpg" alt="Settings" style="max-width: 300px; width: 100%;" />
+<img src="docs/settings-selection.jpg" alt="Settings" style="max-width: 1000px; width: 100%;" />
 
 ### Container Logs
 View logs for any service with:
