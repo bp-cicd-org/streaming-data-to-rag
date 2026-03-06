@@ -11,7 +11,7 @@
 ######################################################################################################
 
 ARG BASE_IMAGE_URL="nvcr.io/nvidia/pytorch"
-ARG BASE_IMAGE_TAG="23.08-py3"
+ARG BASE_IMAGE_TAG="26.01-py3"
 FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
 
 ENV TZ="America/New_York"

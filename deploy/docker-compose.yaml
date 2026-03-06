@@ -81,9 +81,9 @@ services:
       target: builder
     env_file:
       - ./nemo-agent-toolkit-ui.env
-    command: npm run dev
+    command: sh -c "npm run build && npx concurrently --kill-others --raw 'npx next start -p 3099' 'node proxy/server.js'"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - HOSTNAME=0.0.0.0
 
   # File Replay

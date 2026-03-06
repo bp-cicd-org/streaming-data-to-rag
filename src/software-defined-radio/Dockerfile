@@ -11,7 +11,7 @@
 ######################################################################################################
 
 ARG BASE_IMAGE_URL="nvcr.io/nvidia/clara-holoscan/holoscan"
-ARG BASE_IMAGE_TAG="v3.0.0-dgpu"
+ARG BASE_IMAGE_TAG="v3.11.0-cuda13"
 FROM ${BASE_IMAGE_URL}:${BASE_IMAGE_TAG}
 
 ENV TZ="America/New_York"

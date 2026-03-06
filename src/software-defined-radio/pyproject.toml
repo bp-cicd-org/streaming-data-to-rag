@@ -21,7 +21,7 @@ packages = []
 python = ">=3.9"
 requests = "2.32.4"
 nvidia-riva-client = "2.15.0"
-cupy-cuda12x = "^13.4.1"
+cupy-cuda13x = "13.6.0"
 
 [build-system]
 requires = ["poetry-core"]
