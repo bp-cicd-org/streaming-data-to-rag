@@ -480,10 +480,16 @@ jobs:
               RESULT=$(echo "$BODY" | python3 -c "import sys,json; r=json.load(sys.stdin).get('result',''); print(r[:200] if r else '')" 2>/dev/null) || true
               
               if [ "$STATUS" = "success" ] && [ -n "$RESULT" ]; then
-                echo ""
-                echo "✓ RAG pipeline is ready! (attempt #${ATTEMPT}, ${ELAPSED}s elapsed)"
-                echo "  Response preview: ${RESULT:0:200}"
-                break
+                NO_DATA=$(echo "$RESULT" | grep -ci "no database entries\|no stream.*provided\|no.*found within\|no data\|no entries" 2>/dev/null) || true
+                if [ "$NO_DATA" -gt 0 ]; then
+                  echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP 200 but RAG has no ingested data yet (waiting for audio pipeline...)"
+                  echo "    Preview: ${RESULT:0:120}"
+                else
+                  echo ""
+                  echo "✓ RAG pipeline is ready with real data! (attempt #${ATTEMPT}, ${ELAPSED}s elapsed)"
+                  echo "  Response preview: ${RESULT:0:200}"
+                  break
+                fi
               else
                 echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP 200 but not valid yet (status=${STATUS:-empty}, result=${RESULT:-(empty)})"
               fi
