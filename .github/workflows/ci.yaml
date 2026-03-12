@@ -375,24 +375,49 @@ jobs:
           echo "Docker containers status:"
           docker ps -a --format "table {{.Names}}\t{{.Status}}"
 
-      - name: Wait for Data Ingestion
+      - name: Wait for RAG Pipeline Ready
         run: |
           echo "========================================"
-          echo "  WAITING FOR DATA INGESTION PIPELINE"
+          echo "  WAITING FOR RAG PIPELINE TO BE READY"
           echo "========================================"
           echo ""
           echo "Pipeline: fm-file-replay → holoscan-sdr → asr-nim → RAG ingestion"
-          echo "ASR NIM just became ready, waiting 180s for audio to be"
-          echo "transcribed and ingested into RAG before running tests..."
+          echo "Polling RAG retriever until it can answer a query..."
           echo ""
           
-          for i in $(seq 1 18); do
-            echo "  Waiting... ($((i * 10))/180s)"
-            sleep 10
+          MAX_WAIT=900
+          INTERVAL=5
+          ELAPSED=0
+          
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            RESPONSE=$(curl -sf --max-time 30 \
+              -X POST http://localhost:8000/call \
+              -H "Content-Type: application/json" \
+              -d '{"state": {"chat": {"query": "What topics have been discussed?"}}}' \
+              2>/dev/null) || true
+            
+            if [ -n "$RESPONSE" ]; then
+              STATUS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null) || true
+              RESULT=$(echo "$RESPONSE" | python3 -c "import sys,json; r=json.load(sys.stdin).get('result',''); print(r[:200] if r else '')" 2>/dev/null) || true
+              
+              if [ "$STATUS" = "success" ] && [ -n "$RESULT" ]; then
+                echo "✓ RAG pipeline is ready! (${ELAPSED}s elapsed)"
+                echo "  Response preview: ${RESULT:0:120}..."
+                break
+              fi
+            fi
+            
+            ELAPSED=$((ELAPSED + INTERVAL))
+            echo "  Waiting... (${ELAPSED}/${MAX_WAIT}s)"
+            sleep $INTERVAL
           done
           
-          echo ""
-          echo "✓ Data ingestion wait completed"
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "⚠ WARNING: RAG pipeline did not return a valid response within ${MAX_WAIT}s"
+            echo "  Last response: $RESPONSE"
+            echo "  Continuing with tests anyway..."
+          fi
+          
           echo ""
           echo "Docker containers status:"
           docker ps -a --format "table {{.Names}}\t{{.Status}}"
