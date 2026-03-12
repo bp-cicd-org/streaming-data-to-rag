@@ -465,7 +465,7 @@ jobs:
             RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 60 \
               -X POST http://localhost:8000/call \
               -H "Content-Type: application/json" \
-              -d '{"state": {"chat": {"query": "What topics have been discussed?"}}}' \
+              -d '{"state": {"chat": {"question": "What topics have been discussed?"}}}' \
               2>/dev/null) || true
             
             if [ -n "$RESPONSE" ]; then
