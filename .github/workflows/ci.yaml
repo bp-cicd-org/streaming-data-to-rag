@@ -411,6 +411,27 @@ jobs:
             echo ""
           done
           
+          # Initialize the retriever's context manager
+          # (In normal usage, the UI proxy does this automatically before /call)
+          echo "┌──────────────────────────────────────────────┐"
+          echo "│ Initializing RAG Retriever Context Manager   │"
+          echo "└──────────────────────────────────────────────┘"
+          RAG_UUID="${RAG_UUID:-123456}"
+          INIT_RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 \
+            -X POST http://localhost:8000/init \
+            -H "Content-Type: application/json" \
+            -d "{\"uuid\": \"${RAG_UUID}\"}" \
+            2>/dev/null) || true
+          INIT_HTTP=$(echo "$INIT_RESPONSE" | tail -1)
+          INIT_BODY=$(echo "$INIT_RESPONSE" | sed '$d')
+          if [ "$INIT_HTTP" = "200" ]; then
+            echo "  ✓ Retriever initialized (HTTP ${INIT_HTTP}): ${INIT_BODY}"
+          else
+            echo "  ✗ Retriever init failed (HTTP ${INIT_HTTP}): ${INIT_BODY}"
+            echo "  Will retry /init during polling..."
+          fi
+          echo ""
+          
           echo "┌──────────────────────────────────────────────┐"
           echo "│ Polling RAG /call endpoint                   │"
           echo "└──────────────────────────────────────────────┘"
@@ -448,6 +469,14 @@ jobs:
               else
                 echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP 200 but not valid yet (status=${STATUS:-empty}, result=${RESULT:-(empty)})"
               fi
+            elif [ "$HTTP_CODE" = "400" ]; then
+              DETAIL=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('detail',''))" 2>/dev/null) || true
+              echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP 400 - ${DETAIL:-$BODY} (retrying /init...)"
+              curl -s --max-time 30 \
+                -X POST http://localhost:8000/init \
+                -H "Content-Type: application/json" \
+                -d "{\"uuid\": \"${RAG_UUID}\"}" \
+                -o /dev/null 2>/dev/null || true
             elif [ "$HTTP_CODE" != "0" ]; then
               DETAIL=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('detail',''))" 2>/dev/null) || true
               echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP ${HTTP_CODE} - ${DETAIL:-$BODY}"
