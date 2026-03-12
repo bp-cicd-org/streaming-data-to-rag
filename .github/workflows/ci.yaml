@@ -375,6 +375,28 @@ jobs:
           echo "Docker containers status:"
           docker ps -a --format "table {{.Names}}\t{{.Status}}"
 
+      - name: Wait for Data Ingestion
+        run: |
+          echo "========================================"
+          echo "  WAITING FOR DATA INGESTION PIPELINE"
+          echo "========================================"
+          echo ""
+          echo "Pipeline: fm-file-replay → holoscan-sdr → asr-nim → RAG ingestion"
+          echo "ASR NIM just became ready, waiting 180s for audio to be"
+          echo "transcribed and ingested into RAG before running tests..."
+          echo ""
+          
+          for i in $(seq 1 18); do
+            echo "  Waiting... ($((i * 10))/180s)"
+            sleep 10
+          done
+          
+          echo ""
+          echo "✓ Data ingestion wait completed"
+          echo ""
+          echo "Docker containers status:"
+          docker ps -a --format "table {{.Names}}\t{{.Status}}"
+
       # ==========================================
       # PHASE 5: Prepare HTML and Run pytest
       # ==========================================
