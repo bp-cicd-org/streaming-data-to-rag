@@ -480,7 +480,7 @@ jobs:
               RESULT=$(echo "$BODY" | python3 -c "import sys,json; r=json.load(sys.stdin).get('result',''); print(r[:200] if r else '')" 2>/dev/null) || true
               
               if [ "$STATUS" = "success" ] && [ -n "$RESULT" ]; then
-                NO_DATA=$(echo "$RESULT" | grep -ci "no database entries\|no stream.*provided\|no.*found within\|no data\|no entries" 2>/dev/null) || true
+                NO_DATA=$(echo "$RESULT" | grep -ci "no database entries\|no stream.*provided\|no.*found within\|no data\|no entries\|no topics found\|no.*found based on" 2>/dev/null) || true
                 if [ "$NO_DATA" -gt 0 ]; then
                   echo "  [#${ATTEMPT} ${ELAPSED}s] HTTP 200 but RAG has no ingested data yet (waiting for audio pipeline...)"
                   echo "    Preview: ${RESULT:0:120}"
